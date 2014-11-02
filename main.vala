@@ -39,10 +39,10 @@ using edwinspire.Ports;
 	*
 	*
 	* To run on a Linux console:<<BR>>
-	* ./run.sh "/dev/ttyACM0" "1234" "My sms"
+	* ./run.sh "/dev/ttyACM0" "9600" "1234" "My sms"
 	*
 	* To run on a Windows console:<<BR>>
-	* gsm_cmd.exe "COM1" "1234" "My sms"
+	* gsm_cmd.exe "COM1" "9600" "1234" "My sms"
 	*
 	* Return number > 0 is OK.
 	*
@@ -54,25 +54,63 @@ using edwinspire.Ports;
 
 	public static int main (string[] args) {
 
-		if(args.length>3){
-		
 		ModemGSM M = new ModemGSM();
+		print("%s Arg\n", args.length.to_string());
+
+		if(args.length>4){
+		
 		//.with_args ("/dev/ttyS0", 2400, 8, Parity.NONE, StopBits.ONE, HandShaking.NONE);
 		M.Port = args[1];
-		M.Open();		
-		M.BaudRate = 2400;
+		M.Open();
+		M.ATZ();		
+		M.BaudRate = int.parse(args[2]);
 		M.Parityp = Parity.NONE;
 		M.StopBitsp = StopBits.ONE;
 		M.HandShake = HandShaking.NONE;
 		//print("%s\n", M.ATZ().to_string());
-		print("%i\n", M.SMS_SEND(args[2], args[3]));
-		M.Close();		
+		var r = M.SMS_SEND(args[3], args[4], true);
+		print("SMS: [%i]\n", r);
+		//M.ATZ();
+		M.Close();
+				
+		return r;
+		
+			}else if(args.length==3){
+		
+			switch(args[2]){
+				case "--get-auto-baudrate":
+					M.Port = args[1];
+					M.Open();
+					print("Baudrate detected: %s\n", M.AutoBaudRate().to_string());
+					M.Close();
+				break;
+				
+				case "--get-features":
+					M.Port = args[1];
+					M.Open();
+					print("Features:\n");
+					M.GetFeatures();
+					M.Close();		
+				break;
+				
+				case "--test":
+				M.Port = args[1];
+					M.Open();
+					print("Baudrate detected: %s\n", M.AutoBaudRate().to_string());
+					print("Features:\n");
+					M.GetFeatures();
+					M.Close();
+				break;
+				default:
+					print("%s no es un comando reconocido o faltan parametros\n", args[2]);
+				break;
+			}
 		
 		return 0;
 			}else{		
-		warning("Error: no hay parametros suficientes para poder ejecutar el programa\n");
-		return -1;
-		}
+				warning("Error: no hay parametros suficientes para poder ejecutar el programa\n");
+				return -1;
+			}
 		
 	}
 	
